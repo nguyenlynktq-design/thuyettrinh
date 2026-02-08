@@ -2,7 +2,7 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 
 // API Key management - start with env var, can be updated at runtime
-let currentApiKey = (typeof window !== 'undefined' && localStorage.getItem('gemini_api_key')) || process.env.API_KEY || '';
+let currentApiKey = (typeof window !== 'undefined' && localStorage.getItem('gemini_api_key')) || import.meta.env.VITE_GEMINI_API_KEY || '';
 
 export const setApiKey = (key: string) => {
   currentApiKey = key;

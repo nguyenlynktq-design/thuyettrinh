@@ -1,10 +1,17 @@
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 
-const API_KEY = process.env.API_KEY || '';
+// API Key management - start with env var, can be updated at runtime
+let currentApiKey = (typeof window !== 'undefined' && localStorage.getItem('gemini_api_key')) || process.env.API_KEY || '';
+
+export const setApiKey = (key: string) => {
+  currentApiKey = key;
+};
+
+export const getApiKey = () => currentApiKey;
 
 export const generateIllustration = async (theme: string): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  const ai = new GoogleGenAI({ apiKey: currentApiKey });
   const prompt = `A highly vibrant, cheerful, and detailed cartoon-style illustration for children showing: ${theme}. Use bright colors, clear lines, and friendly characters. Ensure there are many small interesting details for a child to describe (e.g., animals, toys, actions). High resolution, professional children's book style.`;
 
   const response = await ai.models.generateContent({
@@ -24,7 +31,7 @@ export const generateIllustration = async (theme: string): Promise<string> => {
 };
 
 export const generatePresentationScript = async (imageUri: string, theme: string, level: string): Promise<{ intro: string, points: string[], conclusion: string }> => {
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  const ai = new GoogleGenAI({ apiKey: currentApiKey });
   const base64Data = imageUri.split(',')[1];
 
   const levelPrompts: Record<string, string> = {
@@ -35,6 +42,20 @@ export const generatePresentationScript = async (imageUri: string, theme: string
       - No complex grammar, no conjunctions
       - Example: "This is my dog. I like my dog. My dog is brown."
       - Total script: 30-50 words maximum`,
+    'MOVER': `
+      - Use 150 vocabulary words including basic verbs and adjectives
+      - Sentences: 5-8 words
+      - Present and simple past tense allowed
+      - Simple connectors: and, but, because
+      - Example: "Hello everyone. Today I want to talk about my pet. I have a cat. My cat is cute and fluffy."
+      - Total script: 60-100 words maximum`,
+    'FLYER': `
+      - Use 250 vocabulary words including descriptive adjectives and action verbs
+      - Sentences: 8-12 words
+      - All basic tenses allowed (present, past, future)
+      - Connectors: and, but, because, so, then, when
+      - Example: "Good morning everyone. I am going to tell you about my favorite place. Last weekend, I went to the zoo with my family."
+      - Total script: 100-150 words maximum`,
     'A1': `
       - Use basic 100 common vocabulary words
       - Sentences: 5-7 words
@@ -55,7 +76,15 @@ export const generatePresentationScript = async (imageUri: string, theme: string
       - All tenses allowed, relative clauses
       - Complex connectors: although, however, therefore
       - Example: "Hello everyone, I would like to present about my favorite holiday. Last summer, my family visited the beach, which was truly amazing."
-      - Total script: 120-180 words maximum`
+      - Total script: 120-180 words maximum`,
+    'B2': `
+      - Use up to 600 vocabulary words including advanced vocabulary
+      - Sentences: 12-20 words with complex structures
+      - All tenses, passive voice, conditionals allowed
+      - Advanced connectors: furthermore, nevertheless, consequently, whereas
+      - Use descriptive language with metaphors and similes when appropriate
+      - Example: "Good morning everyone. Today, I would like to share my thoughts on environmental protection, which has become increasingly important in our modern society."
+      - Total script: 180-250 words maximum`
   };
 
   const levelInstructions = levelPrompts[level] || levelPrompts['STARTER'];
@@ -105,7 +134,7 @@ export const generatePresentationScript = async (imageUri: string, theme: string
 };
 
 export const generateSpeech = async (text: string): Promise<AudioBuffer> => {
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  const ai = new GoogleGenAI({ apiKey: currentApiKey });
   // Prompt explicitly asks for slow, clear reading for children
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
@@ -129,7 +158,7 @@ export const generateSpeech = async (text: string): Promise<AudioBuffer> => {
 };
 
 export const analyzeSpeech = async (originalScript: string, transcript: string): Promise<any> => {
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  const ai = new GoogleGenAI({ apiKey: currentApiKey });
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: `Analyze the following English speech transcript against the target script. 

@@ -2,9 +2,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Theme, GenerationStatus, PresentationData, PracticeResult, EnglishLevel, LEVEL_CONFIG } from './types';
 import { PREDEFINED_THEMES } from './constants';
-import { generateIllustration, generatePresentationScript, generateSpeech, analyzeSpeech, encode } from './services/geminiService';
+import { generateIllustration, generatePresentationScript, generateSpeech, analyzeSpeech, encode, setApiKey as setGeminiApiKey } from './services/geminiService';
 import ThemeCard from './components/ThemeCard';
-import { Play, RotateCcw, Sparkles, Wand2, Volume2, Download, Mic, Trophy, Star, ArrowRight, MessageCircle } from 'lucide-react';
+import ApiKeyModal from './components/ApiKeyModal';
+import { Play, RotateCcw, Sparkles, Wand2, Volume2, Download, Mic, Trophy, Star, ArrowRight, MessageCircle, Settings, RefreshCw, AlertCircle } from 'lucide-react';
 import { GoogleGenAI, Modality } from '@google/genai';
 
 const App: React.FC = () => {
@@ -17,6 +18,41 @@ const App: React.FC = () => {
   const [selectedLevel, setSelectedLevel] = useState<EnglishLevel>(EnglishLevel.STARTER);
   const [transcript, setTranscript] = useState('');
   const [practiceResult, setPracticeResult] = useState<PracticeResult | null>(null);
+  const [showApiModal, setShowApiModal] = useState(false);
+  const [apiKey, setApiKey] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('gemini_api_key') || '';
+    }
+    return '';
+  });
+  const [selectedModel, setSelectedModel] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('gemini_model') || 'gemini-3-flash-preview';
+    }
+    return 'gemini-3-flash-preview';
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  // Check API key on mount
+  useEffect(() => {
+    if (!apiKey) {
+      setShowApiModal(true);
+    }
+  }, []);
+
+  const handleSaveApiKey = (key: string, model: string) => {
+    localStorage.setItem('gemini_api_key', key);
+    localStorage.setItem('gemini_model', model);
+    setApiKey(key);
+    setSelectedModel(model);
+    setGeminiApiKey(key);
+    setError(null);
+  };
+
+  const handleRetry = () => {
+    setError(null);
+    handleGenerate();
+  };
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
@@ -158,7 +194,15 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen pb-12">
+    <div className="min-h-screen flex flex-col">
+      {/* API Key Modal */}
+      <ApiKeyModal
+        isOpen={showApiModal}
+        onClose={() => apiKey && setShowApiModal(false)}
+        onSave={handleSaveApiKey}
+        currentKey={apiKey}
+        currentModel={selectedModel}
+      />
       <header className="bg-white border-b sticky top-0 z-50 px-4 py-4 shadow-sm">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={reset}>
@@ -167,6 +211,15 @@ const App: React.FC = () => {
             </div>
             <h1 className="text-2xl font-bold text-gray-800">KidSpeak <span className="text-blue-500">Lab</span></h1>
           </div>
+
+          {/* Settings Button */}
+          <button
+            onClick={() => setShowApiModal(true)}
+            className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 transition-all"
+          >
+            <Settings size={16} className="text-gray-500" />
+            <span className="text-red-500 font-medium hidden sm:inline">API Key</span>
+          </button>
 
           <div className="flex items-center gap-6">
             <div className="hidden md:flex items-center gap-4 bg-gray-50 p-2 rounded-full px-4 border border-blue-100">
@@ -378,6 +431,63 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl shadow-xl flex items-center gap-4 max-w-lg z-50">
+          <AlertCircle className="text-red-500 flex-shrink-0" />
+          <div className="flex-1">
+            <div className="font-bold">Lỗi API</div>
+            <div className="text-sm">{error}</div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => setShowApiModal(true)} className="px-3 py-2 text-sm bg-white border border-red-300 rounded-lg hover:bg-red-50">
+              Đổi Key
+            </button>
+            <button onClick={handleRetry} className="px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-1">
+              <RefreshCw size={14} /> Thử lại
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Footer Promotion */}
+      <footer className="bg-slate-800 text-slate-300 py-8 px-4 mt-auto border-t border-slate-700 no-print">
+        <div className="max-w-5xl mx-auto text-center">
+          <div className="mb-6 p-6 bg-gradient-to-r from-blue-900/40 to-indigo-900/40 rounded-2xl border border-blue-500/20 backdrop-blur-sm">
+            <p className="font-bold text-lg md:text-xl text-blue-200 mb-3 leading-relaxed">
+              ĐĂNG KÝ KHOÁ HỌC THỰC CHIẾN VIẾT SKKN, TẠO APP DẠY HỌC, TẠO MÔ PHỎNG TRỰC QUAN <br className="hidden md:block" />
+              <span className="text-yellow-400">CHỈ VỚI 1 CÂU LỆNH</span>
+            </p>
+            <a
+              href="https://tinyurl.com/khoahocAI2025"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full transition-all transform hover:-translate-y-1 shadow-lg shadow-blue-900/50"
+            >
+              ĐĂNG KÝ NGAY
+            </a>
+          </div>
+
+          <div className="space-y-2 text-sm md:text-base">
+            <p className="font-medium text-slate-400">Mọi thông tin vui lòng liên hệ:</p>
+            <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-6">
+              <a
+                href="https://www.facebook.com/nguyen.ly.254892/"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-blue-400 transition-colors duration-200 flex items-center gap-2"
+              >
+                <span className="font-bold">Facebook:</span> Ms Ly AI
+              </a>
+              <div className="hidden md:block w-1.5 h-1.5 rounded-full bg-slate-600"></div>
+              <span className="hover:text-emerald-400 transition-colors duration-200 cursor-default flex items-center gap-2">
+                <span className="font-bold">Zalo:</span> 0962859488
+              </span>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

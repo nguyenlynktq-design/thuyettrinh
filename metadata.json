@@ -1,0 +1,7 @@
+{
+  "name": "KidSpeak: English Presentation Lab",
+  "description": "An interactive tool for children to practice English presentations by generating vibrant illustrations, scripts, and high-quality audio based on selected themes.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

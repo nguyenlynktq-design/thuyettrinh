@@ -14,20 +14,26 @@ export const generateIllustration = async (theme: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: currentApiKey });
   const prompt = `A highly vibrant, cheerful, and detailed cartoon-style illustration for children showing: ${theme}. Use bright colors, clear lines, and friendly characters. Ensure there are many small interesting details for a child to describe (e.g., animals, toys, actions). High resolution, professional children's book style.`;
 
-  const response = await ai.models.generateContent({
-    model: 'imagen-3.0-generate-001',
-    contents: { parts: [{ text: prompt }] },
-    config: {
-      imageConfig: { aspectRatio: "4:3" }
-    }
-  });
+  try {
+    const response = await ai.models.generateContent({
+      model: 'imagen-3.0-generate-001',
+      contents: { parts: [{ text: prompt }] },
+      config: {
+        imageConfig: { aspectRatio: "4:3" }
+      }
+    });
 
-  for (const part of response.candidates?.[0]?.content?.parts || []) {
-    if (part.inlineData) {
-      return `data:image/png;base64,${part.inlineData.data}`;
+    for (const part of response.candidates?.[0]?.content?.parts || []) {
+      if (part.inlineData) {
+        return `data:image/png;base64,${part.inlineData.data}`;
+      }
     }
+    throw new Error("No image data found in response");
+  } catch (error) {
+    console.warn("Imagen generation failed, falling back to Pollinations:", error);
+    // Fallback to Pollinations.ai
+    return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
   }
-  throw new Error("No image data found in response");
 };
 
 export const generatePresentationScript = async (imageUri: string, theme: string, level: string): Promise<{ intro: string, points: string[], conclusion: string }> => {

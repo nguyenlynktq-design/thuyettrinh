@@ -80,6 +80,7 @@ const App: React.FC = () => {
       setStatus(GenerationStatus.READY);
     } catch (error) {
       console.error("Generation failed:", error);
+      setError(error instanceof Error ? error.message : "Đã xảy ra lỗi không xác định");
       setStatus(GenerationStatus.ERROR);
     }
   };
@@ -262,7 +263,7 @@ const App: React.FC = () => {
           </header>
 
           <main className="max-w-6xl mx-auto px-4 mt-8">
-            {status === GenerationStatus.IDLE && (
+            {(status === GenerationStatus.IDLE || status === GenerationStatus.ERROR) && (
               <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <section className="text-center space-y-4">
                   <h2 className="text-4xl font-bold text-gray-800">Let's practice English! 🚀</h2>

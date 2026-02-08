@@ -15,7 +15,7 @@ export const generateIllustration = async (theme: string): Promise<string> => {
   const prompt = `A highly vibrant, cheerful, and detailed cartoon-style illustration for children showing: ${theme}. Use bright colors, clear lines, and friendly characters. Ensure there are many small interesting details for a child to describe (e.g., animals, toys, actions). High resolution, professional children's book style.`;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-image',
+    model: 'imagen-3.0-generate-001',
     contents: { parts: [{ text: prompt }] },
     config: {
       imageConfig: { aspectRatio: "4:3" }
@@ -90,7 +90,7 @@ export const generatePresentationScript = async (imageUri: string, theme: string
   const levelInstructions = levelPrompts[level] || levelPrompts['STARTER'];
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-2.0-flash',
     contents: {
       parts: [
         { inlineData: { mimeType: 'image/png', data: base64Data } },
@@ -137,7 +137,7 @@ export const generateSpeech = async (text: string): Promise<AudioBuffer> => {
   const ai = new GoogleGenAI({ apiKey: currentApiKey });
   // Prompt explicitly asks for slow, clear reading for children
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-preview-tts",
+    model: "gemini-2.0-flash-exp",
     contents: [{ parts: [{ text: `Read this script very clearly, slowly (0.8x speed), and expressively with a friendly US English accent for a child: ${text}` }] }],
     config: {
       responseModalities: [Modality.AUDIO],
@@ -160,7 +160,7 @@ export const generateSpeech = async (text: string): Promise<AudioBuffer> => {
 export const analyzeSpeech = async (originalScript: string, transcript: string): Promise<any> => {
   const ai = new GoogleGenAI({ apiKey: currentApiKey });
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-2.0-flash',
     contents: `Analyze the following English speech transcript against the target script. 
                Target: "${originalScript}"
                Transcript: "${transcript}"
